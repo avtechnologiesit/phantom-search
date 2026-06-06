@@ -6,474 +6,233 @@ const TYPED_QUERIES = [
   'who controls my data?',
   'what is zero-knowledge encryption',
   'how to disappear online',
-  'best anonymous browsers',
-  'tor network explained',
-  'vpn vs proxy vs tor',
+  'best anonymous browsers 2024',
+  'vpn vs tor vs proxy',
   'digital privacy rights india',
+  'end-to-end encryption explained',
 ]
 
-const PRIVACY_STATS = [
-  { value: '0', label: 'Cookies stored', icon: '🍪' },
-  { value: '0', label: 'Trackers active', icon: '👁' },
-  { value: '0', label: 'IP logs kept', icon: '🔌' },
-  { value: '∞', label: 'Searches protected', icon: '🛡' },
+const STATS = [
+  { value: '0', label: 'Cookies stored', glow: '#00e676' },
+  { value: '0', label: 'Trackers active', glow: '#00e676' },
+  { value: '0', label: 'IP logs kept', glow: '#00e676' },
+  { value: '∞', label: 'Searches protected', glow: '#9d7de8' },
 ]
 
 const FEATURES = [
-  { icon: '🔐', title: 'Zero Logs', desc: 'No search history. No user profiles. Nothing stored ever.' },
-  { icon: '🌐', title: 'Encrypted Transit', desc: 'All queries encrypted in transit. ISPs see nothing.' },
-  { icon: '🚫', title: 'No Fingerprinting', desc: 'Browser fingerprinting blocked at the protocol level.' },
-  { icon: '⚡', title: 'Real Results', desc: 'Powered by Google via anonymous proxy. Full results, zero tracking.' },
+  { icon: '🔐', title: 'Zero Logs', desc: 'No search history. No user profiles. Nothing stored.' },
+  { icon: '🌐', title: 'Encrypted', desc: 'All queries encrypted. ISPs see nothing.' },
+  { icon: '🚫', title: 'No Fingerprinting', desc: 'Browser fingerprinting blocked at protocol level.' },
+  { icon: '⚡', title: 'Real Results', desc: 'Full Google results via anonymous proxy.' },
 ]
 
 export default function HomePage() {
   const [query, setQuery] = useState('')
   const [typedText, setTypedText] = useState('')
-  const [queryIndex, setQueryIndex] = useState(0)
-  const [charIndex, setCharIndex] = useState(0)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [qIdx, setQIdx] = useState(0)
+  const [charIdx, setCharIdx] = useState(0)
+  const [deleting, setDeleting] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 })
   const [loaded, setLoaded] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  useEffect(() => { setLoaded(true) }, [])
+  useEffect(() => { setTimeout(() => setLoaded(true), 80) }, [])
 
-  // Typewriter effect
+  // Typewriter
   useEffect(() => {
-    if (isFocused) return
-    const current = TYPED_QUERIES[queryIndex]
-    const speed = isDeleting ? 40 : 80
-    const timer = setTimeout(() => {
-      if (!isDeleting && charIndex < current.length) {
-        setTypedText(current.slice(0, charIndex + 1))
-        setCharIndex(c => c + 1)
-      } else if (isDeleting && charIndex > 0) {
-        setTypedText(current.slice(0, charIndex - 1))
-        setCharIndex(c => c - 1)
-      } else if (!isDeleting && charIndex === current.length) {
-        setTimeout(() => setIsDeleting(true), 1800)
-      } else if (isDeleting && charIndex === 0) {
-        setIsDeleting(false)
-        setQueryIndex(i => (i + 1) % TYPED_QUERIES.length)
-      }
-    }, speed)
-    return () => clearTimeout(timer)
-  }, [charIndex, isDeleting, queryIndex, isFocused])
+    if (focused) return
+    const cur = TYPED_QUERIES[qIdx]
+    const t = setTimeout(() => {
+      if (!deleting && charIdx < cur.length) { setTypedText(cur.slice(0, charIdx + 1)); setCharIdx(c => c + 1) }
+      else if (deleting && charIdx > 0) { setTypedText(cur.slice(0, charIdx - 1)); setCharIdx(c => c - 1) }
+      else if (!deleting && charIdx === cur.length) { setTimeout(() => setDeleting(true), 1800) }
+      else { setDeleting(false); setQIdx(i => (i + 1) % TYPED_QUERIES.length) }
+    }, deleting ? 38 : 75)
+    return () => clearTimeout(t)
+  }, [charIdx, deleting, qIdx, focused])
 
   // Particle canvas
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animId: number
-    let particles: Array<{ x: number; y: number; vx: number; vy: number; size: number; opacity: number; hue: number }> = []
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    for (let i = 0; i < 120; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.6 + 0.1,
-        hue: Math.random() * 60 + 240, // purple-violet range
-      })
-    }
-
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    let id: number
+    const pts = Array.from({ length: 80 }, () => ({
+      x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+      vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35,
+      r: Math.random() * 1.8 + .4, o: Math.random() * .5 + .1,
+      h: Math.random() * 60 + 240,
+    }))
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    resize(); window.addEventListener('resize', resize)
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Draw connection lines
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x
-          const dy = particles[i].y - particles[j].y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < 120) {
-            ctx.beginPath()
-            ctx.moveTo(particles[i].x, particles[i].y)
-            ctx.lineTo(particles[j].x, particles[j].y)
-            ctx.strokeStyle = `hsla(260, 70%, 65%, ${(1 - dist / 120) * 0.25})`
-            ctx.lineWidth = 0.5
-            ctx.stroke()
-          }
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d = Math.hypot(dx, dy)
+          if (d < 110) { ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.strokeStyle = `hsla(260,70%,65%,${(1 - d / 110) * .2})`; ctx.lineWidth = .4; ctx.stroke() }
         }
+        ctx.beginPath(); ctx.arc(pts[i].x, pts[i].y, pts[i].r, 0, Math.PI * 2)
+        ctx.fillStyle = `hsla(${pts[i].h},80%,70%,${pts[i].o})`; ctx.fill()
+        pts[i].x += pts[i].vx; pts[i].y += pts[i].vy
+        if (pts[i].x < 0 || pts[i].x > canvas.width) pts[i].vx *= -1
+        if (pts[i].y < 0 || pts[i].y > canvas.height) pts[i].vy *= -1
       }
-
-      // Draw particles
-      particles.forEach(p => {
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `hsla(${p.hue}, 80%, 70%, ${p.opacity})`
-        ctx.fill()
-
-        p.x += p.vx
-        p.y += p.vy
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
-      })
-
-      animId = requestAnimationFrame(draw)
+      id = requestAnimationFrame(draw)
     }
     draw()
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
+    return () => { cancelAnimationFrame(id); window.removeEventListener('resize', resize) }
   }, [])
 
   // Mouse parallax
   useEffect(() => {
-    const handler = (e: MouseEvent) => setMousePos({ x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight })
-    window.addEventListener('mousemove', handler)
-    return () => window.removeEventListener('mousemove', handler)
+    const h = (e: MouseEvent) => setMouse({ x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight })
+    window.addEventListener('mousemove', h)
+    return () => window.removeEventListener('mousemove', h)
   }, [])
 
-  const handleSearch = useCallback((e?: React.FormEvent) => {
-    e?.preventDefault()
-    const q = query.trim()
-    if (!q) return
-    router.push(`/search?q=${encodeURIComponent(q)}`)
+  const search = useCallback(() => {
+    const q = query.trim(); if (!q) return
+    router.push(`/search?q=${encodeURIComponent(q)}&tab=web`)
   }, [query, router])
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch()
-  }
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden', background: 'var(--void)' }}>
-      {/* Particle canvas */}
       <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
 
-      {/* Animated grid floor */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: '-50%', right: '-50%', height: '50vh',
-        backgroundImage: `linear-gradient(var(--purple-dim) 1px, transparent 1px), linear-gradient(90deg, var(--purple-dim) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-        transform: `perspective(600px) rotateX(70deg) translateY(${mousePos.y * 10}px)`,
-        opacity: 0.15, zIndex: 0,
-        animation: 'grid-move 4s linear infinite',
-      }} />
+      {/* Grid floor */}
+      <div style={{ position: 'fixed', bottom: 0, left: '-50%', right: '-50%', height: '45vh', backgroundImage: 'linear-gradient(var(--purple-dim) 1px,transparent 1px),linear-gradient(90deg,var(--purple-dim) 1px,transparent 1px)', backgroundSize: '50px 50px', transform: `perspective(500px) rotateX(65deg) translateY(${mouse.y * 8}px)`, opacity: .12, zIndex: 0, animation: 'grid-move 5s linear infinite' }} />
 
-      {/* Radial glow blobs */}
-      <div style={{
-        position: 'fixed', top: '20%', left: '15%', width: 600, height: 600,
-        background: 'radial-gradient(circle, rgba(124,92,191,0.18) 0%, transparent 70%)',
-        transform: `translate(${(mousePos.x - 0.5) * -30}px, ${(mousePos.y - 0.5) * -30}px)`,
-        zIndex: 0, pointerEvents: 'none', transition: 'transform 0.1s ease',
-      }} />
-      <div style={{
-        position: 'fixed', top: '30%', right: '10%', width: 500, height: 500,
-        background: 'radial-gradient(circle, rgba(224,64,251,0.10) 0%, transparent 70%)',
-        transform: `translate(${(mousePos.x - 0.5) * 20}px, ${(mousePos.y - 0.5) * 20}px)`,
-        zIndex: 0, pointerEvents: 'none', transition: 'transform 0.12s ease',
-      }} />
-      <div style={{
-        position: 'fixed', bottom: '20%', left: '40%', width: 400, height: 400,
-        background: 'radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%)',
-        zIndex: 0, pointerEvents: 'none',
-      }} />
+      {/* Glow blobs */}
+      <div style={{ position: 'fixed', top: '15%', left: '10%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(124,92,191,.16) 0%,transparent 70%)', transform: `translate(${(mouse.x-.5)*-25}px,${(mouse.y-.5)*-25}px)`, zIndex: 0, pointerEvents: 'none', transition: 'transform .12s ease' }} />
+      <div style={{ position: 'fixed', top: '30%', right: '8%', width: 400, height: 400, background: 'radial-gradient(circle,rgba(224,64,251,.08) 0%,transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
 
-      {/* Scanline overlay */}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
-        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)',
-      }} />
+      {/* Scanline */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none', backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px)' }} />
 
-      {/* Nav */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(124,92,191,0.15)',
-        backdropFilter: 'blur(20px)', background: 'rgba(4,2,13,0.7)',
-        opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease',
-      }}>
+      {/* ── NAV ── */}
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(124,92,191,.12)', backdropFilter: 'blur(20px)', background: 'rgba(4,2,13,.72)', opacity: loaded ? 1 : 0, transition: 'opacity .5s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ position: 'relative', width: 36, height: 36 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--purple-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(124,92,191,0.15)' }}>
-              <span style={{ fontSize: 18 }}>👁</span>
-            </div>
-            <div style={{ position: 'absolute', inset: -4, borderRadius: '50%', border: '1px solid rgba(124,92,191,0.3)', animation: 'pulse-ring 3s ease-out infinite' }} />
+          <div style={{ position: 'relative', width: 32, height: 32 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--purple-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(124,92,191,.15)', fontSize: 16 }}>👁</div>
+            <div style={{ position: 'absolute', inset: -4, borderRadius: '50%', border: '1px solid rgba(124,92,191,.25)', animation: 'pulse-ring 3s ease-out infinite' }} />
           </div>
           <div>
-            <div style={{ fontFamily: 'Orbitron, monospace', fontWeight: 800, fontSize: 16, letterSpacing: '0.15em', color: 'var(--violet)', lineHeight: 1 }}>PHANTOM</div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'var(--purple-core)', letterSpacing: '0.3em', marginTop: 2 }}>SEARCH ENGINE</div>
+            <div style={{ fontFamily: 'Orbitron,monospace', fontWeight: 800, fontSize: 14, letterSpacing: '.14em', color: 'var(--violet)', lineHeight: 1 }}>PHANTOM</div>
+            <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 8, color: 'var(--purple-core)', letterSpacing: '.28em' }}>SEARCH ENGINE</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {[
-            { dot: '#00e676', label: 'No Cookies' },
-            { dot: '#00e5ff', label: 'Encrypted' },
-            { dot: '#e040fb', label: 'Anonymous' },
-          ].map(({ dot, label }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: dot, boxShadow: `0 0 8px ${dot}` }} />
-              {label}
+        {/* Nav badges — hidden on very small screens */}
+        <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
+          {[['#00e676','No Cookies'],['#00e5ff','Encrypted'],['#e040fb','Anonymous']].map(([c,l]) => (
+            <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 16, border: '1px solid rgba(255,255,255,.05)', background: 'rgba(255,255,255,.02)', fontSize: 10, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono,monospace' }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: c, boxShadow: `0 0 6px ${c}` }} />{l}
             </div>
           ))}
         </div>
       </nav>
 
-      {/* HERO */}
-      <main style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '120px 24px 80px' }}>
+      {/* ── HERO ── */}
+      <main style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '100px 16px 60px', textAlign: 'center' }}>
 
         {/* Shield orb */}
-        <div className="animate-float" style={{ marginBottom: 40, position: 'relative', opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.2s' }}>
-          {/* Orbiting rings */}
-          {[1, 2, 3].map(i => (
-            <div key={i} style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              width: 120 + i * 50, height: 120 + i * 50,
-              marginLeft: -(60 + i * 25), marginTop: -(60 + i * 25),
-              borderRadius: '50%',
-              border: `1px solid rgba(124,92,191,${0.3 - i * 0.08})`,
-              animation: `orbit ${8 + i * 4}s linear infinite${i % 2 === 0 ? ' reverse' : ''}`,
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: i === 1 ? 'var(--cyan)' : i === 2 ? 'var(--purple-bright)' : 'var(--accent)', boxShadow: `0 0 10px currentColor`, marginTop: -3, marginLeft: '50%' }} />
+        <div className="animate-float" style={{ marginBottom: 32, position: 'relative', opacity: loaded ? 1 : 0, transition: 'opacity .7s ease .2s' }}>
+          {[1,2,3].map(i => (
+            <div key={i} style={{ position: 'absolute', top: '50%', left: '50%', width: 100+i*44, height: 100+i*44, marginLeft: -(50+i*22), marginTop: -(50+i*22), borderRadius: '50%', border: `1px solid rgba(124,92,191,${.28-i*.07})`, animation: `orbit ${8+i*4}s linear infinite${i%2===0?' reverse':''}` }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: i===1?'var(--cyan)':i===2?'var(--purple-bright)':'var(--accent)', marginTop: -2.5, marginLeft: '50%' }} />
             </div>
           ))}
-          {/* Core orb */}
-          <div style={{
-            width: 110, height: 110, borderRadius: '50%',
-            background: 'radial-gradient(circle at 35% 35%, rgba(157,125,232,0.4), rgba(124,92,191,0.2), rgba(26,21,64,0.8))',
-            border: '2px solid rgba(157,125,232,0.5)',
-            boxShadow: '0 0 40px rgba(124,92,191,0.4), inset 0 0 30px rgba(157,125,232,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44,
-            backdropFilter: 'blur(10px)',
-          }}>
-            🛡
-          </div>
+          <div style={{ width: 94, height: 94, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%,rgba(157,125,232,.4),rgba(124,92,191,.2),rgba(26,21,64,.8))', border: '1.5px solid rgba(157,125,232,.45)', boxShadow: '0 0 36px rgba(124,92,191,.35),inset 0 0 24px rgba(157,125,232,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>🛡</div>
         </div>
 
         {/* Headline */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.4em', color: 'var(--purple-core)', marginBottom: 16, textTransform: 'uppercase', opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease 0.3s' }}>
-            ◈ PRIVATE · SECURE · UNTRACEABLE ◈
-          </div>
-          <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(36px, 7vw, 72px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 20, opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.4s' }}>
-            <span style={{ background: 'linear-gradient(135deg, #ddd0ff 0%, #9d7de8 40%, #e040fb 70%, #c4a8ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              Search Without
-            </span>
-            <br />
-            <span style={{ color: 'var(--text-primary)' }}>Being Watched.</span>
+        <div style={{ marginBottom: 36, opacity: loaded ? 1 : 0, transition: 'opacity .8s ease .3s' }}>
+          <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, letterSpacing: '.35em', color: 'var(--purple-core)', marginBottom: 14, textTransform: 'uppercase' }}>◈ PRIVATE · SECURE · UNTRACEABLE ◈</div>
+          <h1 style={{ fontFamily: 'Orbitron,monospace', fontSize: 'clamp(28px,6.5vw,66px)', fontWeight: 900, lineHeight: 1.08, letterSpacing: '-.02em', marginBottom: 16 }}>
+            <span style={{ background: 'linear-gradient(135deg,#ddd0ff 0%,#9d7de8 40%,#e040fb 70%,#c4a8ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Search Without</span>
+            <br /><span style={{ color: 'var(--text-primary)' }}>Being Watched.</span>
           </h1>
-          <p style={{ fontSize: 16, color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7, opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.5s' }}>
-            No cookies. No tracking. No surveillance. Just pure, anonymous search powered by encrypted technology.
+          <p style={{ fontSize: 'clamp(13px,2vw,16px)', color: 'var(--text-secondary)', maxWidth: 460, margin: '0 auto', lineHeight: 1.7 }}>
+            No cookies. No tracking. No surveillance. Pure anonymous search.
           </p>
         </div>
 
-        {/* SEARCH BAR */}
-        <div style={{ width: '100%', maxWidth: 680, marginBottom: 60, opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.6s' }}>
-          <div style={{
-            position: 'relative',
-            background: 'rgba(18,15,46,0.8)',
-            borderRadius: 16,
-            border: isFocused ? '1px solid rgba(157,125,232,0.8)' : '1px solid rgba(74,63,160,0.4)',
-            boxShadow: isFocused
-              ? '0 0 0 4px rgba(124,92,191,0.15), 0 20px 60px rgba(0,0,0,0.5), 0 0 60px rgba(124,92,191,0.1)'
-              : '0 20px 60px rgba(0,0,0,0.4)',
-            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            backdropFilter: 'blur(20px)',
-          }}>
-            {/* Glow bar on focus */}
-            {isFocused && <div style={{ position: 'absolute', top: -1, left: '20%', right: '20%', height: 2, background: 'linear-gradient(90deg, transparent, var(--purple-bright), var(--accent), var(--purple-bright), transparent)', borderRadius: '0 0 4px 4px', opacity: 0.8 }} />}
+        {/* ── SEARCH BAR ── */}
+        <div style={{ width: '100%', maxWidth: 660, marginBottom: 40, opacity: loaded ? 1 : 0, transition: 'opacity .8s ease .5s' }}>
+          <div style={{ position: 'relative', background: 'rgba(18,15,46,.82)', borderRadius: 16, border: focused ? '1px solid rgba(157,125,232,.8)' : '1px solid rgba(74,63,160,.4)', boxShadow: focused ? '0 0 0 4px rgba(124,92,191,.14),0 16px 50px rgba(0,0,0,.5)' : '0 16px 50px rgba(0,0,0,.4)', transition: 'all .25s ease', backdropFilter: 'blur(20px)' }}>
+            {focused && <div style={{ position: 'absolute', top: -1, left: '15%', right: '15%', height: 2, background: 'linear-gradient(90deg,transparent,var(--purple-bright),var(--accent),var(--purple-bright),transparent)', borderRadius: '0 0 4px 4px', opacity: .8 }} />}
 
-            <div style={{ display: 'flex', alignItems: 'center', padding: '6px 8px 6px 20px', gap: 12 }}>
-              {/* Search icon */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isFocused ? '#9d7de8' : '#4a3fa0'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transition: 'stroke 0.3s' }}>
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '6px 8px 6px 18px', gap: 10 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={focused?'#9d7de8':'#4a3fa0'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transition: 'stroke .2s' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 
               <div style={{ position: 'relative', flex: 1 }}>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  style={{
-                    width: '100%', background: 'transparent', border: 'none', outline: 'none',
-                    fontSize: 18, color: 'var(--text-primary)', padding: '12px 0',
-                    letterSpacing: '0.01em',
-                  }}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                {/* Placeholder typewriter */}
-                {!query && !isFocused && (
-                  <div style={{
-                    position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)', fontSize: 18, pointerEvents: 'none',
-                    display: 'flex', alignItems: 'center', gap: 0, letterSpacing: '0.01em',
-                  }}>
+                <input ref={inputRef} type="text" value={query} onChange={e => setQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && search()}
+                  onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+                  style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 'clamp(15px,3vw,18px)', color: 'var(--text-primary)', padding: '12px 0', letterSpacing: '.01em' }}
+                  autoComplete="off" spellCheck={false} />
+                {!query && !focused && (
+                  <div style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 'clamp(14px,2.5vw,18px)', pointerEvents: 'none', display: 'flex', alignItems: 'center' }}>
                     <span>{typedText}</span>
-                    <span style={{ width: 2, height: 20, background: 'var(--purple-bright)', marginLeft: 1, animation: 'blink 1s step-end infinite', borderRadius: 1 }} />
+                    <span style={{ width: 2, height: 18, background: 'var(--purple-bright)', marginLeft: 1, animation: 'blink 1s step-end infinite', borderRadius: 1 }} />
                   </div>
                 )}
               </div>
 
-              {/* Lock badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: 'rgba(0,230,118,0.08)', borderRadius: 8, border: '1px solid rgba(0,230,118,0.15)', flexShrink: 0 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e676" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#00e676', letterSpacing: '0.05em' }}>PRIVATE</span>
+              {/* Private badge — hidden on tiny screens */}
+              <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', background: 'rgba(0,230,118,.08)', borderRadius: 7, border: '1px solid rgba(0,230,118,.14)', flexShrink: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00e676" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 9, color: '#00e676' }}>PRIVATE</span>
               </div>
 
-              {/* Search button */}
-              <button
-                onClick={() => handleSearch()}
-                style={{
-                  padding: '12px 24px', borderRadius: 10, border: 'none',
-                  background: query ? 'linear-gradient(135deg, #7c5cbf, #9d7de8, #e040fb)' : 'rgba(74,63,160,0.3)',
-                  color: query ? 'white' : 'var(--text-muted)',
-                  fontWeight: 700, fontSize: 15, letterSpacing: '0.05em',
-                  transition: 'all 0.2s ease', cursor: query ? 'pointer' : 'default',
-                  boxShadow: query ? '0 4px 20px rgba(157,125,232,0.4)' : 'none',
-                  fontFamily: 'Orbitron, monospace',
-                }}>
+              <button onClick={search} style={{ padding: '11px 20px', borderRadius: 10, border: 'none', background: query ? 'linear-gradient(135deg,#7c5cbf,#9d7de8,#e040fb)' : 'rgba(74,63,160,.3)', color: query ? 'white' : 'var(--text-muted)', fontWeight: 700, fontSize: 'clamp(12px,2vw,15px)', transition: 'all .2s ease', cursor: query ? 'pointer' : 'default', boxShadow: query ? '0 4px 18px rgba(157,125,232,.4)' : 'none', fontFamily: 'Orbitron,monospace', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
                 SEARCH
               </button>
             </div>
           </div>
 
           {/* Quick searches */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {['Privacy tools', 'Tor browser', 'VPN guide', 'Encrypted email'].map(s => (
-              <button key={s} onClick={() => { setQuery(s); router.push(`/search?q=${encodeURIComponent(s)}`) }} style={{
-                padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(74,63,160,0.3)',
-                background: 'rgba(18,15,46,0.5)', color: 'var(--text-secondary)', fontSize: 12,
-                cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)',
-                fontFamily: 'JetBrains Mono, monospace',
-              }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = 'rgba(157,125,232,0.6)'; (e.target as HTMLElement).style.color = 'var(--violet)' }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = 'rgba(74,63,160,0.3)'; (e.target as HTMLElement).style.color = 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {['Privacy tools','Tor browser','VPN guide','Encrypted email'].map(s => (
+              <button key={s} onClick={() => { setQuery(s); router.push(`/search?q=${encodeURIComponent(s)}&tab=web`) }}
+                style={{ padding: '5px 12px', borderRadius: 16, border: '1px solid rgba(74,63,160,.28)', background: 'rgba(18,15,46,.5)', color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer', transition: 'all .18s', fontFamily: 'JetBrains Mono,monospace', backdropFilter: 'blur(10px)' }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.borderColor='rgba(157,125,232,.5)'; (e.target as HTMLElement).style.color='var(--violet)' }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.borderColor='rgba(74,63,160,.28)'; (e.target as HTMLElement).style.color='var(--text-secondary)' }}>
                 {s}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Privacy Stats */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 80, flexWrap: 'wrap', justifyContent: 'center', opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.7s' }}>
-          {PRIVACY_STATS.map(({ value, label, icon }) => (
-            <div key={label} style={{
-              textAlign: 'center', padding: '20px 28px',
-              background: 'rgba(18,15,46,0.6)', borderRadius: 16,
-              border: '1px solid rgba(74,63,160,0.25)', backdropFilter: 'blur(20px)',
-              minWidth: 120,
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>{icon}</div>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, color: value === '0' ? '#00e676' : 'var(--purple-glow)', lineHeight: 1, marginBottom: 6, textShadow: value === '0' ? '0 0 20px rgba(0,230,118,0.5)' : '0 0 20px rgba(184,158,245,0.5)' }}>{value}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.05em', fontFamily: 'JetBrains Mono, monospace' }}>{label}</div>
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(100px,1fr))', gap: 10, width: '100%', maxWidth: 560, marginBottom: 56, opacity: loaded ? 1 : 0, transition: 'opacity .8s ease .6s' }}>
+          {STATS.map(({ value, label, glow }) => (
+            <div key={label} style={{ textAlign: 'center', padding: '16px 12px', background: 'rgba(18,15,46,.6)', borderRadius: 14, border: '1px solid rgba(74,63,160,.22)', backdropFilter: 'blur(16px)' }}>
+              <div style={{ fontFamily: 'Orbitron,monospace', fontSize: 'clamp(20px,4vw,26px)', fontWeight: 900, color: glow, lineHeight: 1, marginBottom: 6, textShadow: `0 0 16px ${glow}66` }}>{value}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '.04em', fontFamily: 'JetBrains Mono,monospace' }}>{label}</div>
             </div>
           ))}
         </div>
 
-        {/* Features grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 900, width: '100%', opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease 0.8s' }}>
+        {/* Features */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, maxWidth: 860, width: '100%', opacity: loaded ? 1 : 0, transition: 'opacity .8s ease .7s' }}>
           {FEATURES.map(({ icon, title, desc }) => (
-            <div key={title} style={{
-              padding: '24px', borderRadius: 16,
-              background: 'rgba(18,15,46,0.5)', backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(74,63,160,0.2)',
-              transition: 'all 0.3s ease', cursor: 'default',
-            }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(124,92,191,0.5)'
-                el.style.background = 'rgba(26,21,64,0.7)'
-                el.style.transform = 'translateY(-4px)'
-                el.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(124,92,191,0.1)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(74,63,160,0.2)'
-                el.style.background = 'rgba(18,15,46,0.5)'
-                el.style.transform = 'translateY(0)'
-                el.style.boxShadow = 'none'
-              }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700, color: 'var(--violet)', letterSpacing: '0.05em', marginBottom: 8 }}>{title}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</div>
+            <div key={title} style={{ padding: '22px 20px', borderRadius: 16, background: 'rgba(18,15,46,.5)', backdropFilter: 'blur(18px)', border: '1px solid rgba(74,63,160,.18)', transition: 'all .28s ease' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor='rgba(124,92,191,.45)'; el.style.background='rgba(26,21,64,.7)'; el.style.transform='translateY(-3px)'; el.style.boxShadow='0 16px 32px rgba(0,0,0,.28)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor='rgba(74,63,160,.18)'; el.style.background='rgba(18,15,46,.5)'; el.style.transform='none'; el.style.boxShadow='none' }}>
+              <div style={{ fontSize: 26, marginBottom: 10 }}>{icon}</div>
+              <div style={{ fontFamily: 'Orbitron,monospace', fontSize: 12, fontWeight: 700, color: 'var(--violet)', letterSpacing: '.04em', marginBottom: 7 }}>{title}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</div>
             </div>
           ))}
-        </div>
-
-        {/* Tech architecture SVG animation */}
-        <div style={{ marginTop: 80, width: '100%', maxWidth: 800, opacity: loaded ? 1 : 0, transition: 'opacity 1s ease 1s' }}>
-          <div style={{ textAlign: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.3em', color: 'var(--text-dim)', marginBottom: 24, textTransform: 'uppercase' }}>
-            How your search travels — encrypted end to end
-          </div>
-          <svg viewBox="0 0 800 140" style={{ width: '100%', overflow: 'visible' }}>
-            <defs>
-              <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                <path d="M1 1L8 5L1 9" fill="none" stroke="#7c5cbf" strokeWidth="2" strokeLinecap="round"/>
-              </marker>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-
-            {/* Nodes */}
-            {[
-              { x: 80, label: 'YOU', sub: 'Encrypted', color: '#00e5ff', icon: '👤' },
-              { x: 240, label: 'PHANTOM', sub: 'Proxy Layer', color: '#9d7de8', icon: '👁' },
-              { x: 400, label: 'RELAY', sub: 'Anonymize', color: '#e040fb', icon: '🔀' },
-              { x: 560, label: 'INDEX', sub: 'Search Index', color: '#9d7de8', icon: '🗄' },
-              { x: 720, label: 'RESULTS', sub: 'To You Only', color: '#00e676', icon: '✅' },
-            ].map(({ x, label, sub, color, icon }) => (
-              <g key={label}>
-                <circle cx={x} cy={70} r={34} fill="rgba(18,15,46,0.9)" stroke={color} strokeWidth="1.5" filter="url(#glow)" opacity="0.9"/>
-                <text x={x} y={65} textAnchor="middle" fontSize="20" dominantBaseline="middle">{icon}</text>
-                <text x={x} y={84} textAnchor="middle" fill={color} fontSize="8" fontFamily="Orbitron, monospace" fontWeight="700" letterSpacing="0.1em">{label}</text>
-                <text x={x} y={115} textAnchor="middle" fill="#6b5e8a" fontSize="9" fontFamily="JetBrains Mono, monospace">{sub}</text>
-              </g>
-            ))}
-
-            {/* Animated connection lines */}
-            {[[80+34, 240-34], [240+34, 400-34], [400+34, 560-34], [560+34, 720-34]].map(([x1, x2], i) => (
-              <g key={i}>
-                <line x1={x1} y1={70} x2={x2} y2={70} stroke="rgba(74,63,160,0.3)" strokeWidth="1" strokeDasharray="4 4"/>
-                <line x1={x1} y1={70} x2={x2} y2={70} stroke="#7c5cbf" strokeWidth="1.5" strokeDasharray="8 20" markerEnd="url(#arr)"
-                  style={{ animation: `dash-anim ${1.5 + i * 0.3}s linear infinite`, strokeDashoffset: 0 }}/>
-              </g>
-            ))}
-
-            {/* Lock badges on lines */}
-            {[160, 320, 480, 640].map(x => (
-              <g key={x}>
-                <rect x={x - 16} y={54} width={32} height={16} rx={8} fill="rgba(0,230,118,0.1)" stroke="rgba(0,230,118,0.3)" strokeWidth="0.5"/>
-                <text x={x} y={63} textAnchor="middle" fill="#00e676" fontSize="8" fontFamily="JetBrains Mono, monospace" dominantBaseline="middle">🔒</text>
-              </g>
-            ))}
-          </svg>
         </div>
       </main>
 
       {/* Footer */}
-      <footer style={{
-        position: 'relative', zIndex: 10, textAlign: 'center', padding: '24px',
-        borderTop: '1px solid rgba(74,63,160,0.15)', background: 'rgba(4,2,13,0.6)',
-        backdropFilter: 'blur(20px)',
-      }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>
-          PHANTOM SEARCH · NO LOGS · NO COOKIES · NO COMPROMISE
-        </div>
-        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-dim)', opacity: 0.6 }}>
-          Powered by anonymous search technology · {new Date().getFullYear()}
-        </div>
+      <footer style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '18px 16px', borderTop: '1px solid rgba(74,63,160,.12)', background: 'rgba(4,2,13,.65)', backdropFilter: 'blur(20px)' }}>
+        <div style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 10, color: 'var(--text-dim)', letterSpacing: '.08em' }}>PHANTOM SEARCH · NO LOGS · NO COOKIES · NO COMPROMISE · {new Date().getFullYear()}</div>
       </footer>
     </div>
   )
